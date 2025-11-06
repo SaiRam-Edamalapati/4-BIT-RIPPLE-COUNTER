@@ -39,74 +39,49 @@ In timing diagram Q0 is changing as soon as the negative edge of clock pulse is 
  RegisterNumber:24000246
 
 ```
-module RippleCounter(
-   input wire clk,  // Clock input
-   output reg [3:0] count // 4-bit counter output
+module Exp_12 (
+    input clk,      // Clock input
+    input reset,    // Reset input (active high)
+    output [3:0] q  // 4-bit output
 );
 
-// Counter logic
-always @(posedge clk) begin
-   if (count == 4'b1111) // Reset when count reaches 15
-       count <= 4'b0000;
-   else
-       count <= count + 1; // Increment count
-end
+    reg [3:0] q_int;
 
-endmodule
+    // Assign internal register to output
+    assign q = q_int;
 
-// Testbench
-module RippleCounter_tb;
+    // First flip-flop toggles with main clock
+    always @(posedge clk) begin
+        if (reset)
+            q_int[0] <= 1'b0;       // Reset first bit
+        else
+            q_int[0] <= ~q_int[0];  // Toggle first bit
+    end
 
-// Inputs
-reg clk;
-
-// Outputs
-wire [3:0] count;
-
-// Instantiate the counter
-RippleCounter uut(
-   .clk(clk),
-   .count(count)
-);
-
-// Clock generation
-initial begin
-   clk = 0;
-   forever #5 clk = ~clk; // Toggle clock every 5 time units
-end
-
-// Stimulus
-initial begin
-   // Wait for a few clock cycles
-   #10;
-   
-   // Display header
-   $display("Time | Count");
-   $display("-----------------");
-   
-   // Functional table testing
-   // Increment count 16 times and display the count
-   repeat (16) begin
-       #5; // Wait for one clock cycle
-       $display("%4d | %b", $time, count);
-   end
-   
-   // End simulation
-   $finish;
-end
+    // Generate remaining flip-flops
+    genvar i;
+    generate
+        for (i = 1; i < 4; i = i + 1) begin : ripple
+            always @(negedge q_int[i-1] or posedge reset) begin
+                if (reset)
+                    q_int[i] <= 1'b0;       // Reset bit
+                else
+                    q_int[i] <= ~q_int[i];  // Toggle bit on previous bit’s clock
+            end
+        end
+    endgenerate
 
 endmodule
 ```
 
 **RTL LOGIC FOR 4 Bit Ripple Counter**
 
-![image](https://github.com/user-attachments/assets/bf620c6c-65a7-486e-8281-0db99ec3a14a)
+<img width="873" height="412" alt="image" src="https://github.com/user-attachments/assets/750a8dc1-c95a-4f9d-88dd-d24b59796f57" />
 
 
 **TIMING DIGRAMS FOR 4 Bit Ripple Counter**
 
-<img width="1600" height="373" alt="image" src="https://github.com/user-attachments/assets/178139e4-f0a9-439d-8dc3-8fdb0b61ab64" />
-
+<img width="1918" height="1138" alt="image" src="https://github.com/user-attachments/assets/a0244a22-752e-492a-81f1-c0914e9b5a18" />
 
 **RESULTS**
  Thus the program executed succesfully.
